@@ -1,0 +1,90 @@
+Practical Machine Learning Project
+========================================================
+
+Preparation
+======================
+
+Load packages
+```{r}
+library(lattice); 
+library(ggplot2); 
+library(caret); 
+library(randomForest); 
+library(rpart); 
+library(rpart.plot);
+```
+
+Load data
+```{r}
+train <- read.csv("pml-training.csv", na.strings=c("NA","#DIV/0!", ""))
+test <- read.csv("pml-testing.csv", na.strings=c("NA","#DIV/0!", ""))
+```
+
+Clean data
+
+Remove columns with missing values and irrelevant columns
+```{r}
+train <-train[,colSums(is.na(train)) == 0]
+train<-train[,-c(1:7)]
+test <-test[,colSums(is.na(test)) == 0]
+test<-test[,-c(1:7)]
+```
+
+Partition the data into 75% training datset and 25% testing dataset
+```{r}
+train.train<- createDataPartition(y=train$classe, p=0.75, list=FALSE)
+TrainTrainingSet <- train[train.train, ] 
+TestTrainingSet <- train[-train.train, ]
+```
+
+Exploratory analysis
+```{r fig.width=7, fig.height=6}
+plot(TrainTrainingSet$classe, col="yellow", main="Plot of levels of variable classe within the TrainTrainingSet data set", xlab="classe", ylab="Frequency")
+```
+The plot shows that Level A is the most frequent while level D is the least frequent.
+
+
+Model 1: Decision Tree
+==================================
+```{r}
+model1 <- rpart(classe ~ ., data=TrainTrainingSet, method="class")
+prediction1 <- predict(model1, TestTrainingSet, type = "class")
+rpart.plot(model1, main="Classification Tree", extra=102, under=TRUE, faclen=0)
+```
+
+Test results
+```{r}
+confusionMatrix(prediction1, TestTrainingSet$classe)
+```
+
+Model 2: Random Forest
+======================
+```{r}
+model2 <- randomForest(classe ~. , data=TrainTrainingSet, method="class")
+```
+
+Predicting:
+```{r}
+prediction2 <- predict(model2, TestTrainingSet, type = "class")
+```
+
+Test results on TestTrainingSet data set:
+```{r}
+confusionMatrix(prediction2, TestTrainingSet$classe)
+```
+
+Conclusion
+===========
+
+Random Forest is chosen because accuracy for Random Forest model was 0.995 which is higher than the 0.739 (95% CI: (0.727, 0.752)) of Decision Tree model. The expected out-of-sample error is estimated at 0.5%.
+
+
+Submission
+==========
+
+Final outcome of Random Forest Model applied to the testing data.
+```{r}
+predict(model2, test, type="class")
+```
+
+
